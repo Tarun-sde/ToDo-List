@@ -13,6 +13,7 @@ const schema = z.object({
   project: z.string().optional(),
   status: z.enum(['todo', 'in-progress', 'done']),
   priority: z.enum(['low', 'medium', 'high']),
+  category: z.enum(['Study', 'Work', 'Personal', 'Fitness', 'Shopping', 'Other']),
   dueDate: z.string().optional(),
   tags: z.string().optional(), // comma-separated
 });
@@ -33,7 +34,7 @@ export default function TaskDetailPage() {
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { status: 'todo', priority: 'medium' },
+    defaultValues: { status: 'todo', priority: 'medium', category: 'Personal' },
   });
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function TaskDetailPage() {
           project: data.project?._id ?? '',
           status: data.status,
           priority: data.priority,
+          category: data.category || 'Personal',
           dueDate: data.dueDate ? data.dueDate.slice(0, 10) : '',
           tags: data.tags?.join(', ') ?? '',
         });
@@ -110,13 +112,24 @@ export default function TaskDetailPage() {
           <textarea id="task-description" {...register('description')} rows={4} className={cn(inputCls, 'resize-none')} placeholder="Add details…" />
         </div>
 
-        {/* Row: project + priority + status */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Row: project + priority + status + category */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className={labelCls}>Project</label>
             <select id="task-project" {...register('project')} className={inputCls}>
               <option value="">Inbox</option>
               {projects.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Category</label>
+            <select id="task-category" {...register('category')} className={inputCls}>
+              <option value="Study">Study</option>
+              <option value="Work">Work</option>
+              <option value="Personal">Personal</option>
+              <option value="Fitness">Fitness</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div>

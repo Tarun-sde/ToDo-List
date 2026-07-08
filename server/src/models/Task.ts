@@ -19,6 +19,7 @@ export interface ITask extends Document {
   dueDate?: Date;
   tags: string[];
   subtasks: ISubtask[];
+  category: string;
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -40,6 +41,7 @@ const TaskSchema = new Schema<ITask>(
     dueDate: { type: Date },
     tags: [{ type: String }],
     subtasks: [SubtaskSchema],
+    category: { type: String, enum: ['Study', 'Work', 'Personal', 'Fitness', 'Shopping', 'Other'], default: 'Personal' },
     completedAt: { type: Date },
   },
   { timestamps: true }

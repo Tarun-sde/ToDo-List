@@ -5,8 +5,9 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { CATEGORY_META, Category } from '@/lib/constants';
 
-type Task = { _id: string; title: string; dueDate: string; status: string; priority: string };
+type Task = { _id: string; title: string; dueDate: string; status: string; priority: string; category?: Category };
 
 export default function CalendarPage() {
   const [current, setCurrent] = useState(new Date());
@@ -114,6 +115,12 @@ export default function CalendarPage() {
                         }}
                         className="flex items-center gap-1 text-[10px] text-gray-300 bg-white/5 rounded px-1.5 py-0.5 truncate hover:bg-white/10">
                         <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', PRIORITY_DOT[t.priority])} />
+                        {(() => {
+                          const cat = t.category || 'Personal';
+                          return CATEGORY_META[cat] ? (
+                            <span className="shrink-0">{CATEGORY_META[cat].emoji}</span>
+                          ) : null;
+                        })()}
                         <span className="truncate">{t.title}</span>
                       </div>
                     ))}
@@ -144,6 +151,12 @@ export default function CalendarPage() {
                   <div key={t._id} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT[t.priority])} />
+                      {(() => {
+                        const cat = t.category || 'Personal';
+                        return CATEGORY_META[cat] ? (
+                          <span className="shrink-0 text-xs">{CATEGORY_META[cat].emoji}</span>
+                        ) : null;
+                      })()}
                       <span className="text-white text-sm font-medium flex-1 truncate">{t.title}</span>
                     </div>
                     <div className="flex gap-2">

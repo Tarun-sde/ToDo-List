@@ -13,7 +13,7 @@ export async function getSummary(req: AuthRequest, res: Response, next: NextFunc
     eightWeeksAgo.setDate(now.getDate() - 7 * 8);
     eightWeeksAgo.setHours(0, 0, 0, 0);
 
-    const [completionRate, perWeek, byPriority, streakData] = await Promise.all([
+    const [completionRate, perWeek, byPriority, streakData, byCategory, completedByCategory] = await Promise.all([
       // Completion rate
       Task.aggregate([
         { $match: { owner: ownerId } },
@@ -51,7 +51,18 @@ export async function getSummary(req: AuthRequest, res: Response, next: NextFunc
             },
           },
         },
-        { $sort: { '_id.y': -1, '_id.m': -1, '_id.d': -1 } },
+      ]),
+
+      // Tasks by category
+      Task.aggregate([
+        { $match: { owner: ownerId } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ]),
+
+      // Completed tasks by category
+      Task.aggregate([
+        { $match: { owner: ownerId, status: 'done' } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
       ]),
     ]);
 
@@ -76,6 +87,8 @@ export async function getSummary(req: AuthRequest, res: Response, next: NextFunc
       perWeek,
       byPriority: Object.fromEntries(byPriority.map(r => [r._id, r.count])),
       streak,
+      byCategory: Object.fromEntries(byCategory.map(r => [r._id || 'Personal', r.count])),
+      completedByCategory: Object.fromEntries(completedByCategory.map(r => [r._id || 'Personal', r.count])),
     });
   } catch (err) {
     next(err);

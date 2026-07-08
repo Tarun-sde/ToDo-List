@@ -12,6 +12,17 @@ type Summary = {
   perWeek: { _id: number; year: number; count: number }[];
   byPriority: Record<string, number>;
   streak: number;
+  byCategory: Record<string, number>;
+  completedByCategory: Record<string, number>;
+};
+
+const CATEGORY_HEX: Record<string, string> = {
+  Study: '#3b82f6',
+  Work: '#f97316',
+  Personal: '#a855f7',
+  Fitness: '#22c55e',
+  Shopping: '#ec4899',
+  Other: '#6b7280',
 };
 
 const PRIORITY_COLORS: Record<string, string> = { low: '#3b82f6', medium: '#f59e0b', high: '#ef4444' };
@@ -33,6 +44,9 @@ export default function AnalyticsPage() {
   const donutData = [{ name: 'Done', value: done }, { name: 'Pending', value: pending }];
   const weekData = summary?.perWeek.map(w => ({ week: `W${w._id}`, count: w.count })) ?? [];
   const priorityData = Object.entries(summary?.byPriority ?? {}).map(([k, v]) => ({ name: k, count: v }));
+  
+  const categoryData = Object.entries(summary?.byCategory ?? {}).map(([name, value]) => ({ name, value }));
+  const completedCategoryData = Object.entries(summary?.completedByCategory ?? {}).map(([name, count]) => ({ name, count }));
 
   return (
     <div className="max-w-4xl mx-auto space-y-10">
@@ -86,6 +100,35 @@ export default function AnalyticsPage() {
                   <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: 8 }} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                     {priorityData.map((entry, i) => <Cell key={i} fill={PRIORITY_COLORS[entry.name] ?? '#6366f1'} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Category donut */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <h3 className="text-white font-semibold mb-4">Tasks by category</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={categoryData} innerRadius={60} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {categoryData.map((entry, i) => <Cell key={i} fill={CATEGORY_HEX[entry.name] ?? '#6b7280'} />)}
+                  </Pie>
+                  <Legend formatter={v => <span className="text-gray-300 text-sm">{v}</span>} />
+                  <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: 8 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Completed tasks by category */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <h3 className="text-white font-semibold mb-4">Completed tasks by category</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={completedCategoryData} layout="vertical">
+                  <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} width={80} />
+                  <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333', borderRadius: 8 }} />
+                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                    {completedCategoryData.map((entry, i) => <Cell key={i} fill={CATEGORY_HEX[entry.name] ?? '#6b7280'} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

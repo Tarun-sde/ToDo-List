@@ -5,6 +5,7 @@ import { Plus, Search, CheckCircle2, Circle, AlertCircle, Clock, Inbox } from 'l
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import TaskListItem from './TaskListItem';
+import { CATEGORIES, Category, CATEGORY_META } from '@/lib/constants';
 
 export type Task = {
   _id: string;
@@ -13,6 +14,7 @@ export type Task = {
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
   project?: { _id: string; name: string; color: string };
+  category?: Category;
   completedAt?: string;
 };
 
@@ -24,6 +26,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<Filter>('today');
+  const [categoryFilter, setCategoryFilter] = useState<'All' | Category>('All');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [quickAdd, setQuickAdd] = useState('');
@@ -35,6 +38,7 @@ export default function DashboardPage() {
     try {
       const params: Record<string, string> = { page: String(page), limit: '20' };
       if (search) params.search = search;
+      if (categoryFilter !== 'All') params.category = categoryFilter;
       const today = new Date();
 
       if (filter === 'today') {
@@ -53,7 +57,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter, search, page]);
+  }, [filter, categoryFilter, search, page]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
@@ -133,6 +137,33 @@ export default function DashboardPage() {
               filter === key ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'
             )}>
             <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Category filters */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <button
+          onClick={() => { setCategoryFilter('All'); setPage(1); }}
+          className={cn(
+            'shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all',
+            categoryFilter === 'All' ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+          )}
+        >
+          All Categories
+        </button>
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => { setCategoryFilter(cat); setPage(1); }}
+            className={cn(
+              'shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border flex items-center gap-1.5 transition-all',
+              categoryFilter === cat 
+                ? 'bg-violet-600 border-violet-600 text-white' 
+                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+            )}
+          >
+            <span>{CATEGORY_META[cat].emoji}</span> {cat}
           </button>
         ))}
       </div>

@@ -2,6 +2,7 @@ import { format, isPast, isToday } from 'date-fns';
 import { CheckCircle2, Circle, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Task } from './DashboardPage';
+import { CATEGORY_META } from '@/lib/constants';
 
 interface Props {
   task: Task;
@@ -55,6 +56,16 @@ export default function TaskListItem({ task, onToggle, onClick, priorityColor }:
           {task.project.name}
         </span>
       )}
+
+      {/* Category badge */}
+      {(() => {
+        const cat = task.category || 'Personal';
+        return CATEGORY_META[cat] ? (
+          <span className={cn('hidden sm:inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border', CATEGORY_META[cat].color)}>
+            {CATEGORY_META[cat].emoji} {cat}
+          </span>
+        ) : null;
+      })()}
 
       {/* Due date */}
       {task.dueDate && (

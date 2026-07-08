@@ -10,6 +10,7 @@ const CreateTaskSchema = z.object({
   project: z.string().optional().nullable(),
   status: z.enum(['todo', 'in-progress', 'done']).optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
+  category: z.enum(['Study', 'Work', 'Personal', 'Fitness', 'Shopping', 'Other']).optional(),
   dueDate: z.string().datetime({ offset: true }).optional().nullable(),
   tags: z.array(z.string()).optional(),
   subtasks: z.array(z.object({ title: z.string().min(1), completed: z.boolean() })).optional(),
@@ -19,19 +20,26 @@ const UpdateTaskSchema = CreateTaskSchema.partial();
 
 export async function listTasks(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { status, project, priority, dueBefore, dueAfter, search, page = '1', limit = '20' } = req.query as Record<string, string>;
+    const { status, project, priority, dueBefore, dueAfter, search, category, page = '1', limit = '20' } = req.query as Record<string, string>;
 
     const filter: Record<string, unknown> = { owner: req.user!.id };
     if (status) filter.status = status;
     if (project === 'null') filter.project = null;
     else if (project) filter.project = project;
     if (priority) filter.priority = priority;
+    if (category && category !== 'All') filter.category = category;
     if (dueBefore || dueAfter) {
       filter.dueDate = {};
       if (dueBefore) (filter.dueDate as Record<string, Date>).$lte = new Date(dueBefore);
       if (dueAfter) (filter.dueDate as Record<string, Date>).$gte = new Date(dueAfter);
     }
-    if (search) filter.title = { $regex: search, $options: 'i' };
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } },
+      ];
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [tasks, total] = await Promise.all([
