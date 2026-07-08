@@ -16,6 +16,20 @@ const LoginSchema = z.object({
   password: z.string().min(1),
 });
 
+const UpdateProfileSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be at most 50 characters"),
+  avatarUrl: z.string().url("Must be a valid URL").or(z.literal('')).optional(),
+});
+
+const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+});
+
 function signAccess(id: string, email: string) {
   return jwt.sign({ id, email }, process.env.JWT_ACCESS_SECRET!, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
@@ -110,6 +124,54 @@ export async function me(req: Request & { user?: { id: string } }, res: Response
     const user = await User.findById(req.user!.id).select('-passwordHash');
     if (!user) return next(createError('User not found', 404, 'NOT_FOUND'));
     res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateProfile(req: Request & { user?: { id: string } }, res: Response, next: NextFunction) {
+  try {
+    const parsed = UpdateProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return next(createError(parsed.error.errors[0].message, 400, 'VALIDATION_ERROR'));
+    }
+    const { name, avatarUrl } = parsed.data;
+
+    const user = await User.findByIdAndUpdate(
+      req.user!.id,
+      { name, avatarUrl: avatarUrl || undefined },
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+
+    if (!user) return next(createError('User not found', 404, 'NOT_FOUND'));
+
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changePassword(req: Request & { user?: { id: string } }, res: Response, next: NextFunction) {
+  try {
+    const parsed = ChangePasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return next(createError(parsed.error.errors[0].message, 400, 'VALIDATION_ERROR'));
+    }
+    const { currentPassword, newPassword } = parsed.data;
+
+    const user = await User.findById(req.user!.id);
+    if (!user) return next(createError('User not found', 404, 'NOT_FOUND'));
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return next(createError('Current password is incorrect.', 400, 'INVALID_CREDENTIALS'));
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordHash = passwordHash;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully.' });
   } catch (err) {
     next(err);
   }

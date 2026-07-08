@@ -2,18 +2,25 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, User as UserIcon, Mail, Calendar, CheckSquare, LogOut, Moon } from 'lucide-react';
+import { Loader2, User as UserIcon, Mail, Calendar, CheckSquare, LogOut, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { useAuthStore } from '@/features/auth/authStore';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { useTheme } from '@/context/ThemeContext';
+import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be at most 50 characters"),
   avatarUrl: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
 });
 const pwSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  currentPassword: z.string().min(1, 'Current password is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
   confirm: z.string(),
 }).refine(d => d.password === d.confirm, { message: 'Passwords do not match', path: ['confirm'] });
 
@@ -24,10 +31,9 @@ type Summary = {
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [profileSaving, setProfileSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState('');
-  const [pwMsg, setPwMsg] = useState('');
   
   const [totalTasks, setTotalTasks] = useState<number | null>(null);
 
@@ -47,27 +53,28 @@ export default function ProfilePage() {
 
   const onProfile = async (data: { name: string; avatarUrl?: string }) => {
     setProfileSaving(true);
-    setProfileMsg('');
     try {
-      const res = await api.put('/api/auth/me', data).catch(() => api.patch('/auth/me', data));
+      const res = await api.put('/auth/profile', data);
       useAuthStore.setState({ user: res.data });
-      setProfileMsg('Saved!');
-    } catch {
-      setProfileMsg('Failed to save.');
+      toast.success('Profile updated successfully.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Server error.');
     } finally {
       setProfileSaving(false);
     }
   };
 
-  const onPw = async (data: { password: string }) => {
+  const onPw = async (data: any) => {
     setPwSaving(true);
-    setPwMsg('');
     try {
-      await api.patch('/auth/me/password', { password: data.password });
-      setPwMsg('Password updated!');
+      await api.put('/auth/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.password
+      });
+      toast.success('Password updated successfully.');
       pwForm.reset();
-    } catch {
-      setPwMsg('Failed to update password.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Server error.');
     } finally {
       setPwSaving(false);
     }
@@ -80,7 +87,7 @@ export default function ProfilePage() {
 
   const inputCls = 'w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition text-sm';
   
-  const creationDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown';
+  const creationDate = user?.createdAt ? format(new Date(user.createdAt), 'dd MMM yyyy') : 'Unknown';
 
   return (
     <div className="max-w-4xl mx-auto space-y-10">
@@ -120,8 +127,8 @@ export default function ProfilePage() {
             <button onClick={handleLogout} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-red-500/10 text-gray-300 hover:text-red-400 border border-white/10 hover:border-red-500/30 rounded-lg text-sm font-medium transition">
               <LogOut size={16} /> Logout
             </button>
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 rounded-lg text-sm font-medium transition cursor-not-allowed opacity-70" title="Theme toggle (Not implemented yet)">
-              <Moon size={16} /> Dark Theme
+            <button onClick={() => { toggleTheme(); toast.success('Theme updated.'); }} className="flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 rounded-lg text-sm font-medium transition" title="Toggle theme">
+              {theme === 'dark' ? <><Sun size={16} /> Light Theme</> : <><Moon size={16} /> Dark Theme</>}
             </button>
           </div>
         </div>
@@ -142,11 +149,12 @@ export default function ProfilePage() {
               <label className="text-sm text-gray-300 font-medium block mb-1.5">Avatar URL</label>
               <input id="profile-avatar" {...profileForm.register('avatarUrl')} className={inputCls} placeholder="https://…" />
             </div>
-            {profileMsg && <p className={cn('text-sm', profileMsg.includes('!') ? 'text-green-400' : 'text-red-400')}>{profileMsg}</p>}
+            {profileForm.formState.errors.name && <p className="text-red-400 text-xs mt-1">{profileForm.formState.errors.name.message as string}</p>}
+            {profileForm.formState.errors.avatarUrl && <p className="text-red-400 text-xs mt-1">{profileForm.formState.errors.avatarUrl.message as string}</p>}
             <button id="save-profile-btn" type="submit" disabled={profileSaving}
               className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
               {profileSaving && <Loader2 size={14} className="animate-spin" />}
-              Save profile
+              {profileSaving ? 'Saving...' : 'Save profile'}
             </button>
           </form>
         </div>
@@ -154,6 +162,11 @@ export default function ProfilePage() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
           <h2 className="text-white font-semibold">Change password</h2>
           <form onSubmit={pwForm.handleSubmit(onPw as Parameters<typeof pwForm.handleSubmit>[0])} className="space-y-4">
+            <div>
+              <label className="text-sm text-gray-300 font-medium block mb-1.5">Current password</label>
+              <input id="current-password" type="password" {...pwForm.register('currentPassword')} className={inputCls} />
+              {pwForm.formState.errors.currentPassword && <p className="text-red-400 text-xs mt-1">{pwForm.formState.errors.currentPassword.message}</p>}
+            </div>
             <div>
               <label className="text-sm text-gray-300 font-medium block mb-1.5">New password</label>
               <input id="new-password" type="password" {...pwForm.register('password')} className={inputCls} />
@@ -164,11 +177,10 @@ export default function ProfilePage() {
               <input id="confirm-password" type="password" {...pwForm.register('confirm')} className={inputCls} />
               {pwForm.formState.errors.confirm && <p className="text-red-400 text-xs mt-1">{pwForm.formState.errors.confirm.message}</p>}
             </div>
-            {pwMsg && <p className={cn('text-sm', pwMsg.includes('!') ? 'text-green-400' : 'text-red-400')}>{pwMsg}</p>}
             <button id="change-password-btn" type="submit" disabled={pwSaving}
               className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
               {pwSaving && <Loader2 size={14} className="animate-spin" />}
-              Update password
+              {pwSaving ? 'Updating...' : 'Update password'}
             </button>
           </form>
         </div>
