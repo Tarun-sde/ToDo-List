@@ -28,7 +28,8 @@ A full-stack task management application built with the MERN stack. TaskFlow let
 
 ## Live Demo
 
-Coming soon
+- **Frontend:** https://to-do-list-server-vert.vercel.app
+- **Backend API:** https://taskflow-api-enwg.onrender.com/api/health
 
 ---
 
@@ -460,15 +461,20 @@ npm test --workspace=client
 
 ## Deployment
 
-No deployment configuration files (`vercel.json`, `render.yaml`, etc.) exist in the repository at this time.
+**Frontend** — Deployed on Vercel, root directory `client`. A `vercel.json` rewrite proxies all `/api/*` requests to the Render backend at the edge, so the browser sees them as same-origin — this avoids third-party cookie blocking on the refresh-token cookie (Safari ITP, Firefox ETP, and some Chrome/Edge privacy settings block cookies set by a different registrable domain, which broke session persistence in early testing).
 
-**Recommended approach:**
+```json
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://taskflow-api-enwg.onrender.com/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
 
-- **Backend** — Deploy `server/` to Railway or Render; set all environment variables from `server/.env.example` in the platform dashboard
-- **Frontend** — Deploy `client/` to Vercel; set the `VITE_API_URL` environment variable to the full backend base URL (e.g. `https://your-backend.railway.app/api`) and update `CLIENT_ORIGIN` in the backend environment to match the Vercel domain. The Axios client reads `VITE_API_URL` at build time and falls back to the relative `/api` path for local development.
-- **Database** — MongoDB Atlas (already used in development via `MONGO_URI`)
+**Backend** — Deployed on Render, root directory `server`. Build command `npm install && npm run build`, start command `npm start`. Environment variables set in the Render dashboard: `NODE_ENV`, `MONGO_URI`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `CLIENT_ORIGIN`.
 
-The `docker-compose.yml` at the root provides a local MongoDB 7 container for development only.
+**Database** — MongoDB Atlas, connection string set via `MONGO_URI`.
 
 ---
 
