@@ -190,7 +190,7 @@ taskflow/
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Tarun-sde/ToDo-List.git
-cd ToDo-List/taskflow
+cd ToDo-List
 
 # 2. Install all workspaces
 npm install
@@ -465,7 +465,7 @@ No deployment configuration files (`vercel.json`, `render.yaml`, etc.) exist in 
 **Recommended approach:**
 
 - **Backend** — Deploy `server/` to Railway or Render; set all environment variables from `server/.env.example` in the platform dashboard
-- **Frontend** — Deploy `client/` to Vercel; set `VITE_API_URL` to the backend's public URL and update `CLIENT_ORIGIN` in the backend environment to match the Vercel domain
+- **Frontend** — Deploy `client/` to Vercel; set the `VITE_API_URL` environment variable to the full backend base URL (e.g. `https://your-backend.railway.app/api`) and update `CLIENT_ORIGIN` in the backend environment to match the Vercel domain. The Axios client reads `VITE_API_URL` at build time and falls back to the relative `/api` path for local development.
 - **Database** — MongoDB Atlas (already used in development via `MONGO_URI`)
 
 The `docker-compose.yml` at the root provides a local MongoDB 7 container for development only.
@@ -506,7 +506,7 @@ Please keep PRs focused on a single concern and include test coverage for new co
 
 ## License
 
-MIT
+This project does not yet include a LICENSE file. The author intends to release it under the **MIT License** — a LICENSE file will be added before public release.
 
 ---
 
