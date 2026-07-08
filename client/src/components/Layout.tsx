@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/authStore';
-import { LayoutDashboard, FolderKanban, Calendar, BarChart2, LogOut, CheckSquare, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Calendar, BarChart2, LogOut, CheckSquare, Menu, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -9,6 +9,7 @@ const nav = [
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
+  { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function Layout() {

@@ -9,6 +9,7 @@ import ProjectsPage from '@/features/projects/ProjectsPage';
 import KanbanBoard from '@/features/projects/KanbanBoard';
 import CalendarPage from '@/features/calendar/CalendarPage';
 import AnalyticsPage from '@/features/analytics/AnalyticsPage';
+import ProfilePage from '@/features/profile/ProfilePage';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
         { path: '/projects/:id', element: <KanbanBoard /> },
         { path: '/calendar', element: <CalendarPage /> },
         { path: '/analytics', element: <AnalyticsPage /> },
+        { path: '/profile', element: <ProfilePage /> },
       ],
     }],
   },

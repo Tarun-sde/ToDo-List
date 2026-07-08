@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import { Flame, CheckCircle2, Loader2 } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import api from '@/lib/api';
-import { useAuthStore } from '@/features/auth/authStore';
 import { cn } from '@/lib/utils';
-
-const profileSchema = z.object({
-  name: z.string().min(1),
-  avatarUrl: z.string().url('Must be a valid URL').or(z.literal('')).optional(),
-});
-const pwSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirm: z.string(),
-}).refine(d => d.password === d.confirm, { message: 'Passwords do not match', path: ['confirm'] });
 
 type Summary = {
   completionRate: Record<string, number>;
@@ -31,52 +18,14 @@ const PRIORITY_COLORS: Record<string, string> = { low: '#3b82f6', medium: '#f59e
 const DONUT_COLORS = ['#6366f1', '#374151'];
 
 export default function AnalyticsPage() {
-  const { user } = useAuthStore();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [pwSaving, setPwSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState('');
-  const [pwMsg, setPwMsg] = useState('');
-
-  const profileForm = useForm({ resolver: zodResolver(profileSchema), defaultValues: { name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? '' } });
-  const pwForm = useForm({ resolver: zodResolver(pwSchema) });
 
   useEffect(() => {
     api.get('/analytics/summary')
       .then(({ data }) => setSummary(data))
       .finally(() => setLoading(false));
   }, []);
-
-  const onProfile = async (data: { name: string; avatarUrl?: string }) => {
-    setProfileSaving(true);
-    setProfileMsg('');
-    try {
-      const res = await api.put('/api/auth/me', data).catch(() => api.patch('/auth/me', data));
-      useAuthStore.setState({ user: res.data });
-      setProfileMsg('Saved!');
-    } catch {
-      setProfileMsg('Failed to save.');
-    } finally {
-      setProfileSaving(false);
-    }
-  };
-
-  const onPw = async (data: { password: string }) => {
-    setPwSaving(true);
-    setPwMsg('');
-    try {
-      await api.patch('/auth/me/password', { password: data.password });
-      setPwMsg('Password updated!');
-      pwForm.reset();
-    } catch {
-      setPwMsg('Failed to update password.');
-    } finally {
-      setPwSaving(false);
-    }
-  };
-
-  const inputCls = 'w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition text-sm';
 
   // Prep chart data
   const done = summary?.completionRate?.done ?? 0;
@@ -87,52 +36,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-10">
-      <h1 className="text-2xl font-bold text-white">Analytics & Profile</h1>
-
-      {/* Profile section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
-          <h2 className="text-white font-semibold">Profile</h2>
-          <form onSubmit={profileForm.handleSubmit(onProfile as Parameters<typeof profileForm.handleSubmit>[0])} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-300 font-medium block mb-1.5">Name</label>
-              <input id="profile-name" {...profileForm.register('name')} className={inputCls} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-300 font-medium block mb-1.5">Avatar URL</label>
-              <input id="profile-avatar" {...profileForm.register('avatarUrl')} className={inputCls} placeholder="https://…" />
-            </div>
-            {profileMsg && <p className={cn('text-sm', profileMsg.includes('!') ? 'text-green-400' : 'text-red-400')}>{profileMsg}</p>}
-            <button id="save-profile-btn" type="submit" disabled={profileSaving}
-              className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
-              {profileSaving && <Loader2 size={14} className="animate-spin" />}
-              Save profile
-            </button>
-          </form>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
-          <h2 className="text-white font-semibold">Change password</h2>
-          <form onSubmit={pwForm.handleSubmit(onPw as Parameters<typeof pwForm.handleSubmit>[0])} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-300 font-medium block mb-1.5">New password</label>
-              <input id="new-password" type="password" {...pwForm.register('password')} className={inputCls} />
-              {pwForm.formState.errors.password && <p className="text-red-400 text-xs mt-1">{pwForm.formState.errors.password.message}</p>}
-            </div>
-            <div>
-              <label className="text-sm text-gray-300 font-medium block mb-1.5">Confirm password</label>
-              <input id="confirm-password" type="password" {...pwForm.register('confirm')} className={inputCls} />
-              {pwForm.formState.errors.confirm && <p className="text-red-400 text-xs mt-1">{pwForm.formState.errors.confirm.message}</p>}
-            </div>
-            {pwMsg && <p className={cn('text-sm', pwMsg.includes('!') ? 'text-green-400' : 'text-red-400')}>{pwMsg}</p>}
-            <button id="change-password-btn" type="submit" disabled={pwSaving}
-              className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2">
-              {pwSaving && <Loader2 size={14} className="animate-spin" />}
-              Update password
-            </button>
-          </form>
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold text-white">Analytics</h1>
 
       {/* Stats row */}
       {loading ? (
