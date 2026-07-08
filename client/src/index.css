@@ -18,4 +18,10 @@
     background: rgba(255,255,255,0.1);
     border-radius: 9999px;
   }
+  
+  /* ponytail: Native <option> elements cannot fully customize hover/highlight state across browsers. Upgrade path: Radix UI Select or shadcn/ui. */
+  option {
+    background-color: hsl(240 10% 8%);
+    color: hsl(0 0% 98%);
+  }
 }
