@@ -19,7 +19,6 @@ const LoginSchema = z.object({
 
 const UpdateProfileSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be at most 50 characters"),
-  avatarUrl: z.string().url("Must be a valid URL").or(z.literal('')).optional(),
 });
 
 const ChangePasswordSchema = z.object({
@@ -70,7 +69,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     const refreshToken = signRefresh(user.id);
 
     res.cookie('refreshToken', refreshToken, COOKIE_OPTS);
-    res.status(201).json({ accessToken, user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+    res.status(201).json({ accessToken, user: { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt } });
   } catch (err) {
     next(err);
   }
@@ -93,7 +92,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     const refreshToken = signRefresh(user.id);
 
     res.cookie('refreshToken', refreshToken, COOKIE_OPTS);
-    res.json({ accessToken, user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl } });
+    res.json({ accessToken, user: { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt } });
   } catch (err) {
     next(err);
   }
@@ -136,11 +135,11 @@ export async function updateProfile(req: Request & { user?: { id: string } }, re
     if (!parsed.success) {
       return next(createError(parsed.error.errors[0].message, 400, 'VALIDATION_ERROR'));
     }
-    const { name, avatarUrl } = parsed.data;
+    const { name } = parsed.data;
 
     const user = await User.findByIdAndUpdate(
       req.user!.id,
-      { name, avatarUrl: avatarUrl || undefined },
+      { name },
       { new: true, runValidators: true }
     ).select('-passwordHash');
 
