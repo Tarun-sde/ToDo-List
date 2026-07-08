@@ -3,6 +3,7 @@ import { z } from 'zod';
 import Task from '../models/Task.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { createError } from '../middleware/errorHandler.js';
+import { logActivity } from '../services/activity.service.js';
 
 const CreateTaskSchema = z.object({
   title: z.string().min(1),
@@ -74,6 +75,9 @@ export async function createTask(req: AuthRequest, res: Response, next: NextFunc
       owner: req.user!.id,
       dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
     });
+    
+    await logActivity(req.user!.id, 'TASK_CREATED', `Created task "${task.title}"`, task.id, 'Task');
+    
     res.status(201).json(task);
   } catch (err) {
     next(err);
@@ -99,6 +103,13 @@ export async function updateTask(req: AuthRequest, res: Response, next: NextFunc
     ).populate('project', 'name color');
 
     if (!task) return next(createError('Task not found', 404, 'NOT_FOUND'));
+
+    if (data.status === 'done') {
+      await logActivity(req.user!.id, 'TASK_COMPLETED', `Completed task "${task.title}"`, task.id, 'Task');
+    } else {
+      await logActivity(req.user!.id, 'TASK_UPDATED', `Updated task "${task.title}"`, task.id, 'Task');
+    }
+
     res.json(task);
   } catch (err) {
     next(err);
@@ -118,6 +129,13 @@ export async function patchStatus(req: AuthRequest, res: Response, next: NextFun
       { new: true }
     );
     if (!task) return next(createError('Task not found', 404, 'NOT_FOUND'));
+    
+    if (status === 'done') {
+      await logActivity(req.user!.id, 'TASK_COMPLETED', `Completed task "${task.title}"`, task.id, 'Task');
+    } else {
+      await logActivity(req.user!.id, 'TASK_UPDATED', `Updated task "${task.title}"`, task.id, 'Task');
+    }
+    
     res.json(task);
   } catch (err) {
     next(err);
@@ -128,6 +146,9 @@ export async function deleteTask(req: AuthRequest, res: Response, next: NextFunc
   try {
     const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user!.id });
     if (!task) return next(createError('Task not found', 404, 'NOT_FOUND'));
+    
+    await logActivity(req.user!.id, 'TASK_DELETED', `Deleted task "${task.title}"`, task.id, 'Task');
+    
     res.json({ message: 'Task deleted' });
   } catch (err) {
     next(err);

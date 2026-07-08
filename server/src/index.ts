@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import tasksRoutes from './routes/tasks.routes.js';
 import projectsRoutes from './routes/projects.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import activityRoutes from './routes/activity.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/activity', activityRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import User from '../models/User.js';
 import { createError } from '../middleware/errorHandler.js';
+import { logActivity } from '../services/activity.service.js';
 
 const RegisterSchema = z.object({
   name: z.string().min(1),
@@ -145,6 +146,8 @@ export async function updateProfile(req: Request & { user?: { id: string } }, re
 
     if (!user) return next(createError('User not found', 404, 'NOT_FOUND'));
 
+    await logActivity(req.user!.id, 'PROFILE_UPDATED', 'Updated profile information');
+
     res.json(user);
   } catch (err) {
     next(err);
@@ -170,6 +173,8 @@ export async function changePassword(req: Request & { user?: { id: string } }, r
     const passwordHash = await bcrypt.hash(newPassword, 12);
     user.passwordHash = passwordHash;
     await user.save();
+
+    await logActivity(req.user!.id, 'PASSWORD_CHANGED', 'Changed account password');
 
     res.json({ message: 'Password updated successfully.' });
   } catch (err) {

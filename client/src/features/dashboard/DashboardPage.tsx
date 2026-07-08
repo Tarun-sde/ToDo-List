@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import TaskListItem from './TaskListItem';
 import { CATEGORIES, Category, CATEGORY_META } from '@/lib/constants';
+import ActivityFeed from './ActivityFeed';
 
 export type Task = {
   _id: string;
@@ -209,6 +210,9 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+
+      {/* Activity Feed */}
+      <ActivityFeed />
     </div>
   );
 }

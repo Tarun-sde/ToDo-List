@@ -4,6 +4,7 @@ import Project from '../models/Project.js';
 import Task from '../models/Task.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
 import { createError } from '../middleware/errorHandler.js';
+import { logActivity } from '../services/activity.service.js';
 
 const ProjectSchema = z.object({
   name: z.string().min(1),
@@ -42,6 +43,9 @@ export async function createProject(req: AuthRequest, res: Response, next: NextF
     if (!parsed.success) return next(createError(parsed.error.errors[0].message, 400, 'VALIDATION_ERROR'));
 
     const project = await Project.create({ ...parsed.data, owner: req.user!.id });
+    
+    await logActivity(req.user!.id, 'PROJECT_CREATED', `Created project "${project.name}"`, project.id, 'Project');
+    
     res.status(201).json(project);
   } catch (err) {
     next(err);
@@ -59,6 +63,9 @@ export async function updateProject(req: AuthRequest, res: Response, next: NextF
       { new: true, runValidators: true }
     );
     if (!project) return next(createError('Project not found', 404, 'NOT_FOUND'));
+    
+    await logActivity(req.user!.id, 'PROJECT_UPDATED', `Updated project "${project.name}"`, project.id, 'Project');
+    
     res.json(project);
   } catch (err) {
     next(err);
@@ -71,6 +78,9 @@ export async function deleteProject(req: AuthRequest, res: Response, next: NextF
     if (!project) return next(createError('Project not found', 404, 'NOT_FOUND'));
 
     await Task.updateMany({ project: project._id }, { $set: { project: null } });
+    
+    await logActivity(req.user!.id, 'PROJECT_DELETED', `Deleted project "${project.name}"`, project.id, 'Project');
+    
     res.json({ message: 'Project deleted' });
   } catch (err) {
     next(err);
