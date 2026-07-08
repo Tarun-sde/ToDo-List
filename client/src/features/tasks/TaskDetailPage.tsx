@@ -38,24 +38,22 @@ export default function TaskDetailPage() {
   });
 
   useEffect(() => {
-    api.get('/projects').then(({ data }) => setProjects(data));
+    api.get('/projects').then(({ data }) => setProjects(data)).catch(console.error);
     if (!isNew) {
       api.get(`/tasks/${id}`).then(({ data }) => {
         reset({
           title: data.title,
-          description: data.description ?? '',
-          project: data.project?._id ?? '',
+          description: data.description,
+          project: data.project?._id ?? 'none',
           status: data.status,
           priority: data.priority,
           category: data.category || 'Personal',
-          dueDate: data.dueDate ? data.dueDate.slice(0, 10) : '',
-          tags: data.tags?.join(', ') ?? '',
+          dueDate: data.dueDate ? data.dueDate.split('T')[0] : '',
         });
         setSubtasks(data.subtasks ?? []);
-        setLoading(false);
-      });
+      }).catch(console.error).finally(() => setLoading(false));
     }
-  }, [id]); // eslint-disable-line
+  }, [id, isNew, reset]); // eslint-disable-line
 
   const onSubmit = async (data: FormData) => {
     setSaving(true);

@@ -38,7 +38,7 @@ export default function ActivityFeed() {
 
   useEffect(() => {
     api.get('/activity?limit=10')
-      .then(({ data }) => setActivities(data.activities))
+      .then(({ data }) => setActivities(data?.activities ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

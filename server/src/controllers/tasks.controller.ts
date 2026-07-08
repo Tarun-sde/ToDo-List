@@ -21,20 +21,20 @@ const UpdateTaskSchema = CreateTaskSchema.partial();
 
 export async function listTasks(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { status, project, priority, dueBefore, dueAfter, search, category, page = '1', limit = '20' } = req.query as Record<string, string>;
+    const { status, project, priority, dueBefore, dueAfter, search, category, page = '1', limit = '20' } = req.query;
 
     const filter: Record<string, unknown> = { owner: req.user!.id };
-    if (status) filter.status = status;
+    if (typeof status === 'string') filter.status = status;
     if (project === 'null') filter.project = null;
-    else if (project) filter.project = project;
-    if (priority) filter.priority = priority;
-    if (category && category !== 'All') filter.category = category;
-    if (dueBefore || dueAfter) {
+    else if (typeof project === 'string') filter.project = project;
+    if (typeof priority === 'string') filter.priority = priority;
+    if (typeof category === 'string' && category !== 'All') filter.category = category;
+    if (typeof dueBefore === 'string' || typeof dueAfter === 'string') {
       filter.dueDate = {};
-      if (dueBefore) (filter.dueDate as Record<string, Date>).$lte = new Date(dueBefore);
-      if (dueAfter) (filter.dueDate as Record<string, Date>).$gte = new Date(dueAfter);
+      if (typeof dueBefore === 'string') (filter.dueDate as Record<string, Date>).$lte = new Date(dueBefore);
+      if (typeof dueAfter === 'string') (filter.dueDate as Record<string, Date>).$gte = new Date(dueAfter);
     }
-    if (search) {
+    if (typeof search === 'string' && search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
@@ -42,13 +42,15 @@ export async function listTasks(req: AuthRequest, res: Response, next: NextFunct
       ];
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const pageStr = typeof page === 'string' ? page : '1';
+    const limitStr = typeof limit === 'string' ? limit : '20';
+    const skip = (parseInt(pageStr) - 1) * parseInt(limitStr);
     const [tasks, total] = await Promise.all([
-      Task.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)).populate('project', 'name color'),
+      Task.find(filter).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limitStr)).populate('project', 'name color'),
       Task.countDocuments(filter),
     ]);
 
-    res.json({ tasks, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+    res.json({ tasks, total, page: parseInt(pageStr), pages: Math.ceil(total / parseInt(limitStr)) });
   } catch (err) {
     next(err);
   }

@@ -34,11 +34,11 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (currentSearch = search) => {
     setLoading(true);
     try {
       const params: Record<string, string> = { page: String(page), limit: '20' };
-      if (search) params.search = search;
+      if (currentSearch) params.search = currentSearch;
       if (categoryFilter !== 'All') params.category = categoryFilter;
       const today = new Date();
 
@@ -52,22 +52,35 @@ export default function DashboardPage() {
         params.status = 'todo';
       }
 
-      const { data } = await api.get('/tasks', { params });
-      setTasks(data.tasks);
-      setPages(data.pages);
+      const response = await api.get('/tasks', { params });
+      if (response && response.data) {
+        setTasks(response.data.tasks || []);
+        setPages(response.data.pages || 1);
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [filter, categoryFilter, search, page]);
+  }, [filter, categoryFilter, page]); // search removed from dependencies
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchTasks(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search, fetchTasks]);
 
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickAdd.trim()) return;
-    const { data } = await api.post('/tasks', { title: quickAdd.trim() });
-    setQuickAdd('');
-    setTasks(prev => [data, ...prev]);
+    try {
+      const { data } = await api.post('/tasks', { title: quickAdd.trim() });
+      setQuickAdd('');
+      setTasks(prev => [data, ...prev]);
+    } catch (err) {
+      console.error('Failed to add task', err);
+    }
   };
 
   const handleToggle = async (task: Task) => {
