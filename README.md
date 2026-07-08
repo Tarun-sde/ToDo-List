@@ -506,7 +506,7 @@ Please keep PRs focused on a single concern and include test coverage for new co
 
 ## License
 
-This project does not yet include a LICENSE file. The author intends to release it under the **MIT License** — a LICENSE file will be added before public release.
+MIT — see [LICENSE](./LICENSE) for details.
 
 ---
 
