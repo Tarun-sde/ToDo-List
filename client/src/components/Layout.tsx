@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/authStore';
-import { LayoutDashboard, FolderKanban, Calendar, BarChart2, LogOut, CheckSquare, Menu, User } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Calendar, BarChart2, CheckSquare, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -9,18 +9,12 @@ const nav = [
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
-  { to: '/profile', icon: User, label: 'Profile' },
 ];
 
 export function Layout() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const SidebarContent = () => (
     <>
@@ -46,22 +40,19 @@ export function Layout() {
         ))}
       </nav>
 
-      {/* User + logout */}
+      {/* User Card */}
       <div className="p-3 border-t border-white/5">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1">
+        <div 
+          onClick={() => { navigate('/profile'); setOpen(false); }}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors duration-200 group"
+        >
           <div className="w-8 h-8 rounded-full bg-violet-600/30 flex items-center justify-center text-violet-300 font-semibold text-sm shrink-0">
             {user?.name?.[0]?.toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-gray-500 text-xs truncate">{user?.email}</p>
+            <p className="text-white text-sm font-medium truncate group-hover:text-white/90 transition-colors">{user?.name}</p>
           </div>
         </div>
-        <button onClick={handleLogout}
-          className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/5 text-sm transition-all">
-          <LogOut size={16} />
-          Sign out
-        </button>
       </div>
     </>
   );
