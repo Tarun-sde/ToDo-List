@@ -1,9 +1,16 @@
 /**
  * TaskFlow – Demo Data Seeder
+ *
+ * LOCAL DEVELOPMENT ONLY.
+ * This script is intended solely for populating a developer's own local
+ * MongoDB instance with realistic sample data. It must NEVER be run against
+ * the production database.
+ *
  * Run:  npm run seed   (from project root)
  *       tsx server/scripts/seedDemoData.ts
  *
- * Safe to run multiple times – won't duplicate data.
+ * Requires env var: DEMO_SEED_PASSWORD (set in server/.env, never commit the value)
+ * Safe to run multiple times – won\'t duplicate data.
  */
 
 import 'dotenv/config';
@@ -21,6 +28,13 @@ function pick<T>(arr: T[]): T {
 
 // ─── connection ───────────────────────────────────────────────────────────────
 const MONGO_URI = process.env.MONGO_URI ?? 'mongodb://localhost:27017/taskflow';
+
+const DEMO_SEED_PASSWORD = process.env.DEMO_SEED_PASSWORD;
+if (!DEMO_SEED_PASSWORD) {
+  console.error('\n❌  DEMO_SEED_PASSWORD is not set.');
+  console.error('    Add it to server/.env before running the seed script.\n');
+  process.exit(1);
+}
 
 async function connect() {
   await mongoose.connect(MONGO_URI);
@@ -644,11 +658,11 @@ async function main() {
       console.log('    ℹ️  Demo data already seeded for this user.\n');
       console.log('    Demo Credentials');
       console.log(`    Email:    ${DEMO_EMAIL}`);
-      console.log('    Password: Demo@123\n');
+      console.log('    Password: (the value of DEMO_SEED_PASSWORD in your .env)\n');
       process.exit(0);
     }
   } else {
-    const passwordHash = await bcrypt.hash('Demo@123', 12);
+    const passwordHash = await bcrypt.hash(DEMO_SEED_PASSWORD!, 12);
     userId = new mongoose.Types.ObjectId();
     const threeMonthsAgo = daysAgo(90);
     await col.users().insertOne({
@@ -741,7 +755,7 @@ async function main() {
   console.log('🎉  Database seeded successfully!\n');
   console.log('    Demo Credentials');
   console.log(`    Email:    ${DEMO_EMAIL}`);
-  console.log('    Password: Demo@123\n');
+  console.log('    Password: (the value of DEMO_SEED_PASSWORD in your .env)\n');
 
   process.exit(0);
 }

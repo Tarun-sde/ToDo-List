@@ -230,8 +230,14 @@ npm run dev
 
 The client runs at `http://localhost:5173` and the server at `http://localhost:5000`. Vite proxies all `/api/*` requests to the backend.
 
-**Seed demo data** (optional):
+**Seed sample data (local development only):**
+
+This populates your local MongoDB with realistic sample data so every page looks active during development. It reads `DEMO_SEED_PASSWORD` from `server/.env` — set that value before running. Never run this against the production database.
+
 ```bash
+# server/.env — add this line (choose any password for your local dev account)
+DEMO_SEED_PASSWORD=your_local_dev_password
+
 npm run seed
 ```
 

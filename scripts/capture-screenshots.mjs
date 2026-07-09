@@ -23,8 +23,12 @@ import path from 'node:path';
 // ---- Edit these three before running ----
 const BASE_URL = 'https://taskflow-sde26.vercel.app';
 const DEMO_EMAIL = 'demo@taskflow.com';
-const DEMO_PASSWORD = 'Demo@123';
-// ------------------------------------------
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
+if (!DEMO_PASSWORD) {
+  console.error('\n❌  DEMO_PASSWORD env var is not set. Export it before running:\n');
+  console.error('    DEMO_PASSWORD=yourpassword node scripts/capture-screenshots.mjs\n');
+  process.exit(1);
+}
 
 const OUT_DIR = path.resolve('screenshots');
 mkdirSync(OUT_DIR, { recursive: true });
