@@ -6,6 +6,7 @@ A full-stack task management application built with the MERN stack. TaskFlow let
 
 - [Live Demo](#live-demo)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Folder Structure](#folder-structure)
@@ -48,6 +49,26 @@ A full-stack task management application built with the MERN stack. TaskFlow let
 - **Activity Feed** — Chronological log of task and project events displayed on the Dashboard
 - **Profile** — Update display name, change password, view account statistics
 - **Responsive Layout** — Collapsible sidebar on mobile via hamburger menu; fixed sidebar on desktop
+
+---
+
+## Screenshots
+
+| Login | Dashboard |
+|---|---|
+| ![Login](./screenshots/login.png) | ![Dashboard](./screenshots/dashboard.png) |
+
+| Projects | Kanban Board |
+|---|---|
+| ![Projects](./screenshots/projects.png) | ![Kanban](./screenshots/kanban.png) |
+
+| Calendar | Analytics |
+|---|---|
+| ![Calendar](./screenshots/calendar.png) | ![Analytics](./screenshots/analytics.png) |
+
+| Profile |
+|---|
+| ![Profile](./screenshots/profile.png) |
 
 ---
 
