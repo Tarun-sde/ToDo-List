@@ -200,7 +200,7 @@ taskflow/
     │   └── services/
     │       └── activity.service.ts
     └── scripts/
-        └── seedDemoData.ts     # Demo data seeder (git-ignored)
+        └── seedDemoData.ts     # Local dev demo data seeder
 ```
 
 ---
